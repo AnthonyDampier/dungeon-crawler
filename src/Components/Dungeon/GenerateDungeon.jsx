@@ -10,13 +10,12 @@ const generateDungeon = (size) => {
         const row = [];
         for (let x = 0; x < size.width; x++) {
             // Example tile setup, customize as needed
-            const floorOrWall = (Math.random() > 0.85 || (x === 0 || y === 0 || x === size.width-1 || y === size.height-1))? "wall" : "floor";
+            const floorOrWall = Math.random() > 0.85 || x === 0 || y === 0 || x === size.width - 1 || y === size.height - 1 ? "wall" : "floor";
             row.push({
                 revealed: false, // Initially, no tiles are revealed
                 type: floorOrWall, // Randomly assign type for simplicity
-                content: null, // Initially, tiles don't contain anything
+                content: {treasure: null, enemy: null, player: null}, // Initially, tiles don't contain anything
             });
-
         }
         tiles.push(row);
     }
@@ -25,7 +24,7 @@ const generateDungeon = (size) => {
     return tiles;
 };
 
-const Dungeon = () => {
+function Dungeon() {
     const [tiles, setTiles] = useState([]);
 
     useEffect(() => {
@@ -63,13 +62,12 @@ const Dungeon = () => {
                                     : "black",
                             }}
                             onClick={() => revealTile(x, y)} // Example interaction to reveal tiles
-                        >
-                        </div>
+                        ></div>
                     ))}
                 </div>
             ))}
         </div>
     );
-};
+}
 
 export default Dungeon;
