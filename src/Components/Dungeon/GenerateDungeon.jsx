@@ -64,7 +64,6 @@ const Dungeon = () => {
                             }}
                             onClick={() => revealTile(x, y)} // Example interaction to reveal tiles
                         >
-
                         </div>
                     ))}
                 </div>
