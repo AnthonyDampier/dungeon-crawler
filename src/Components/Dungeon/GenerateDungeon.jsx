@@ -3,7 +3,7 @@ import "./Dungeon.css";
 
 const initialDungeonSize = { width: 10, height: 10 };
 
-const generateDungeon = (size) => {
+const generateDungeon = (size, playerPosition) => {
     const tiles = [];
 
     for (let y = 0; y < size.height; y++) {
@@ -12,7 +12,7 @@ const generateDungeon = (size) => {
             // Example tile setup, customize as needed
             const floorOrWall = Math.random() > 0.85 || x === 0 || y === 0 || x === size.width - 1 || y === size.height - 1 ? "wall" : "floor";
             row.push({
-                revealed: false, // Initially, no tiles are revealed
+                revealed: (playerPosition.x === x && playerPosition.y === y ? true : false), // Reveal the player's starting position
                 type: floorOrWall, // Randomly assign type for simplicity
                 content: {treasure: null, enemy: null, player: null}, // Initially, tiles don't contain anything
             });
@@ -24,13 +24,15 @@ const generateDungeon = (size) => {
     return tiles;
 };
 
-function Dungeon() {
+function Dungeon({playerState}) {
     const [tiles, setTiles] = useState([]);
 
     useEffect(() => {
         // Generate the initial dungeon layout when the component mounts
-        setTiles(generateDungeon(initialDungeonSize));
-    }, []);
+        if (tiles.length === 0) {
+            setTiles(generateDungeon(initialDungeonSize, playerState.position));
+        }
+    }, [playerState.position]);
 
     // Function to handle revealing tiles, updating their 'revealed' property
     const revealTile = (x, y) => {
@@ -62,7 +64,9 @@ function Dungeon() {
                                     : "black",
                             }}
                             onClick={() => revealTile(x, y)} // Example interaction to reveal tiles
-                        ></div>
+                        >
+                            {playerState.position.x === x && playerState.position.y === y ? "P" : null}
+                        </div>
                     ))}
                 </div>
             ))}
