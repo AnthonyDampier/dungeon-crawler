@@ -4,14 +4,16 @@ import Dungeon from './Components/Dungeon/GenerateDungeon';
 
   // Function to move the player
   const initialPlayerState = {
-    position: { x: 0, y: 0 },
+    position: { x: 4, y: 4 },
     maxHeah: 100,
     health: 100,
     inventory: [],
+    vision: 3,
     stats: {
       strength: 10,
       agility: 10,
       intelligence: 10,
+      perception: 10,
     },
   }
   
