@@ -14,7 +14,8 @@ const generateDungeon = (size, playerPosition) => {
             row.push({
                 revealed: (playerPosition.x === x && playerPosition.y === y ? true : false), // Reveal the player's starting position
                 type: floorOrWall, // Randomly assign type for simplicity
-                content: {treasure: null, enemy: null, player: null}, // Initially, tiles don't contain anything
+                content: {treasure: null, enemy: null, player: (playerPosition.x === x && playerPosition.y === y ? true : false)}, // Initially, tiles don't contain anything
+                active: false, // Initially, tiles are not active
             });
         }
         tiles.push(row);
@@ -24,18 +25,14 @@ const generateDungeon = (size, playerPosition) => {
     return tiles;
 };
 
-function Dungeon({playerState}) {
+function Dungeon({playerState, movePlayer}) {
     const [tiles, setTiles] = useState([]);
+    const [activeTile, setActiveTile] = useState({x: null, y: null});
+    const [player, setPlayer] = useState(playerState);
 
-    useEffect(() => {
-        // Generate the initial dungeon layout when the component mounts
-        if (tiles.length === 0) {
-            setTiles(generateDungeon(initialDungeonSize, playerState.position));
-            revealTilesToPlayer(playerState.position.x, playerState.position.y);
-        }
-    }, [playerState.position]);
 
-    // Function to handle revealing tiles, updating their 'revealed' property
+
+    // Function to handle revealing tiles, updating their 'revealed' property (testing purposes)
     const revealTile = (x, y) => {
         setTiles((prevTiles) => {
             const newTiles = [...prevTiles];
@@ -46,19 +43,77 @@ function Dungeon({playerState}) {
         });
     };
 
-    const revealTilesToPlayer = (x, y) => { 
-        setTiles((prevTiles) => {
-            const newTiles = [...prevTiles];
-            for (let i = -playerState.vision; i <= playerState.vision; i++) {
-                for (let j = -playerState.vision; j <= playerState.vision; j++) {
-                    if (newTiles[y + i] && newTiles[y + i][x + j] && Math.abs(i) + Math.abs(j) <= playerState.vision + 1) {
-                        newTiles[y + i][x + j] = { ...newTiles[y + i][x + j], revealed: true };
+
+
+    const selectPlayer = (x, y) => {
+        console.log("Player selected at: ", x, y);
+        console.log("Player position: ", playerState.position);
+        console.log("Active tile: ", activeTile);
+        // activate tile player is one and deactivate the rest, if present
+        if (activeTile.x === null && activeTile.y === null && playerState.position.x === x && playerState.position.y === y) {
+            setTiles((prevTiles) => {
+                const newTiles = [...prevTiles];
+                for (let i = 0; i < newTiles.length; i++) {
+                    for (let j = 0; j < newTiles[i].length; j++) {
+                        newTiles[i][j] = { ...newTiles[i][j], active: false };
                     }
                 }
-            }
-            return newTiles;
-        });
+                newTiles[y][x] = { ...newTiles[y][x], active: true };
+                return newTiles;
+            });
+            setActiveTile({x: x, y: y});
+        } else if (activeTile.x === x || activeTile.y === y) {
+            setTiles((prevTiles) => {
+                const newTiles = [...prevTiles];
+                for (let i = 0; i < newTiles.length; i++) {
+                    for (let j = 0; j < newTiles[i].length; j++) {
+                        newTiles[i][j] = { ...newTiles[i][j], active: false };
+                    }
+                }
+                newTiles[y][x] = { ...newTiles[y][x], active: false };
+                return newTiles;
+            });
+            setActiveTile({x: null, y: null});
+        } else if ((activeTile.x !== x || activeTile.y !== y) && playerState.position.x !== x && playerState.position.y !== y) {
+            // move player
+            movePlayer(x - playerState.position.x, y - playerState.position.y);
+            // setTiles((prevTiles) => {
+            //     const newTiles = [...prevTiles];
+            //     for (let i = 0; i < newTiles.length; i++) {
+            //         for (let j = 0; j < newTiles[i].length; j++) {
+            //             newTiles[i][j] = { ...newTiles[i][j], active: false };
+            //         }
+            //     }
+            //     newTiles[y][x] = { ...newTiles[y][x], active: true };
+            //     return newTiles;
+            // });
+            setActiveTile({x: x, y: y});
+            console.log('Attempt to move player');
+        }
     }
+
+    useEffect(() => {
+        const revealTilesToPlayer = (x, y) => { 
+            setTiles((prevTiles) => {
+                const newTiles = [...prevTiles];
+                for (let i = -playerState.vision; i <= playerState.vision; i++) {
+                    for (let j = -playerState.vision; j <= playerState.vision; j++) {
+                        if (newTiles[y + i] && newTiles[y + i][x + j] && Math.abs(i) + Math.abs(j) <= playerState.vision + 1) {
+                            newTiles[y + i][x + j] = { ...newTiles[y + i][x + j], revealed: true };
+                        }
+                    }
+                }
+                return newTiles;
+            });
+        };
+
+        // Generate the initial dungeon layout when the component mounts
+        if (tiles.length === 0) {
+            setTiles(generateDungeon(initialDungeonSize, playerState.position));
+            revealTilesToPlayer(playerState.position.x, playerState.position.y);
+        }
+
+    }, [playerState.position, activeTile.y, activeTile.x, tiles.length, playerState.vision, playerState.position.x, playerState.position.y, playerState]);
 
     // Render the dungeon (simplified for this example)
     return (
@@ -71,16 +126,25 @@ function Dungeon({playerState}) {
                             style={{
                                 width: "20px",
                                 height: "20px",
-                                border: "1px solid black",
-                                backgroundColor: tile.revealed
+                                backgroundColor: !tile.active ? tile.revealed
                                     ? tile.type === "wall"
                                         ? "grey"
                                         : "white"
-                                    : "black",
+                                    : "black"
+                                    : "red",
+                                border: !tile.active ? "1px solid black" : "1px solid red",
+
                             }}
-                            onClick={() => revealTile(x, y)} // Example interaction to reveal tiles
+                            // onClick={() => revealTile(x, y)} // Example interaction to reveal tiles
+                            onClick={() => selectPlayer(x, y)} // Example interaction to reveal tiles                           
+
                         >
-                            {playerState.position.x === x && playerState.position.y === y ? "P" : null}
+                            <p
+                                style={{
+                                    visibility: tile.revealed ? "visible" : "hidden",
+                                    margin: 0,
+                                }}
+                            >{tile.content.player? "P" : null}</p>
                         </div>
                     ))}
                 </div>

@@ -67,12 +67,16 @@ import Dungeon from './Components/Dungeon/GenerateDungeon';
       }));
     };
 
+    useEffect(() => {
+      console.log("Player state updated: ", playerState);
+    }, [playerState]);
+
 
   return (
     <div className="App">
       <h1>React App</h1>
       {/* Pass playerState as prop to GenerateDungeon */}
-      <Dungeon playerState={playerState}/>
+      <Dungeon playerState={playerState} movePlayer={movePlayer}/>
       {/* Displaying player states */}
       <div>
         {/* Displaying player states */}
