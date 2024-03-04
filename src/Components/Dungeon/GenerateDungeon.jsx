@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./Dungeon.css";
 
-const initialDungeonSize = { width: 10, height: 10 };
+const initialDungeonSize = { width: 20, height: 20 };
 
 const generateDungeon = (size, playerPosition) => {
     const tiles = [];
@@ -31,6 +31,7 @@ function Dungeon({playerState}) {
         // Generate the initial dungeon layout when the component mounts
         if (tiles.length === 0) {
             setTiles(generateDungeon(initialDungeonSize, playerState.position));
+            revealTilesToPlayer(playerState.position.x, playerState.position.y);
         }
     }, [playerState.position]);
 
@@ -45,6 +46,20 @@ function Dungeon({playerState}) {
         });
     };
 
+    const revealTilesToPlayer = (x, y) => { 
+        setTiles((prevTiles) => {
+            const newTiles = [...prevTiles];
+            for (let i = -playerState.vision; i <= playerState.vision; i++) {
+                for (let j = -playerState.vision; j <= playerState.vision; j++) {
+                    if (newTiles[y + i] && newTiles[y + i][x + j] && Math.abs(i) + Math.abs(j) <= playerState.vision + 1) {
+                        newTiles[y + i][x + j] = { ...newTiles[y + i][x + j], revealed: true };
+                    }
+                }
+            }
+            return newTiles;
+        });
+    }
+
     // Render the dungeon (simplified for this example)
     return (
         <div className="dungeon-container">
@@ -54,8 +69,8 @@ function Dungeon({playerState}) {
                         <div
                             key={x}
                             style={{
-                                width: "40px",
-                                height: "40px",
+                                width: "20px",
+                                height: "20px",
                                 border: "1px solid black",
                                 backgroundColor: tile.revealed
                                     ? tile.type === "wall"
