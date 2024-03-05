@@ -93,9 +93,6 @@ function Dungeon({player, movePlayer}) {
 
     }, [player]);
 
-    console.log("Player state: ", player.position);
-    console.log("Active tile: ", activeTile);
-    console.log("Tiles: ", tiles);
     // Render the dungeon (simplified for this example)
     return (
         <div className="dungeon-container">
