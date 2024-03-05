@@ -67,12 +67,16 @@ import Dungeon from './Components/Dungeon/GenerateDungeon';
       }));
     };
 
+    useEffect(() => {
+      console.log("Player state updated: ", playerState);
+    }, [playerState]);
+
 
   return (
     <div className="App">
       <h1>React App</h1>
       {/* Pass playerState as prop to GenerateDungeon */}
-      <Dungeon playerState={playerState}/>
+      <Dungeon player={playerState} movePlayer={movePlayer}/>
       {/* Displaying player states */}
       <div>
         {/* Displaying player states */}
@@ -88,10 +92,10 @@ import Dungeon from './Components/Dungeon/GenerateDungeon';
           <button onClick={() => updateStats("agility", 1)}>Increase Agility</button>
           <button onClick={() => updateStats("intelligence", 1)}>Increase Intelligence</button>
           <p>Position: {JSON.stringify(playerState.position)}</p>
-          <button onClick={() => movePlayer(1, 0)}>Move Right</button>
           <button onClick={() => movePlayer(-1, 0)}>Move Left</button>
-          <button onClick={() => movePlayer(0, 1)}>Move Down</button>
+          <button onClick={() => movePlayer(1, 0)}>Move Right</button>
           <button onClick={() => movePlayer(0, -1)}>Move Up</button>
+          <button onClick={() => movePlayer(0, 1)}>Move Down</button>
         </div>
       </div>
     </div>

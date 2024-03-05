@@ -3,7 +3,7 @@ import "./Dungeon.css";
 
 const initialDungeonSize = { width: 20, height: 20 };
 
-const generateDungeon = (size, playerPosition) => {
+const generateDungeon = (size, playerPosition, player) => {
     const tiles = [];
 
     for (let y = 0; y < size.height; y++) {
@@ -14,7 +14,8 @@ const generateDungeon = (size, playerPosition) => {
             row.push({
                 revealed: (playerPosition.x === x && playerPosition.y === y ? true : false), // Reveal the player's starting position
                 type: floorOrWall, // Randomly assign type for simplicity
-                content: {treasure: null, enemy: null, player: null}, // Initially, tiles don't contain anything
+                content: {treasure: null, enemy: null, player: (playerPosition.x === x && playerPosition.y === y ? true : false)}, // Initially, tiles don't contain anything
+                active: false, // Initially, tiles are not active
             });
         }
         tiles.push(row);
@@ -24,18 +25,36 @@ const generateDungeon = (size, playerPosition) => {
     return tiles;
 };
 
-function Dungeon({playerState}) {
-    const [tiles, setTiles] = useState([]);
-
-    useEffect(() => {
-        // Generate the initial dungeon layout when the component mounts
-        if (tiles.length === 0) {
-            setTiles(generateDungeon(initialDungeonSize, playerState.position));
-            revealTilesToPlayer(playerState.position.x, playerState.position.y);
+function updateDungeon(tiles, player) {
+    console.log('Updating dungeon');
+    const newTiles = [...tiles];
+    for (let i = 0; i < newTiles.length; i++) {
+        for (let j = 0; j < newTiles[i].length; j++) {
+            newTiles[i][j] = { ...newTiles[i][j], revealed: false, content: { ...newTiles[i][j].content, player: false } };
         }
-    }, [playerState.position]);
+    }
+    for (let i = -3; i <= 3; i++) {
+        for (let j = -3; j <= 3; j++) {
+            if (newTiles[player.position.y + i] && newTiles[player.position.y + i][player.position.x + j] && Math.abs(i) + Math.abs(j) <= 1) {
+                if (player.position.y + i === player.position.y && player.position.x + j === player.position.x) {
+                    newTiles[player.position.y + i][player.position.x + j] = { ...newTiles[player.position.y + i][player.position.x + j], content: { ...newTiles[player.position.y + i][player.position.x + j].content, player: true } };
+                } else {
+                    newTiles[player.position.y + i][player.position.x + j] = { ...newTiles[player.position.y + i][player.position.x + j], revealed: true };
+                }
+            } 
+        }
+    }
+    return newTiles;
+}
 
-    // Function to handle revealing tiles, updating their 'revealed' property
+function Dungeon({player, movePlayer}) {
+    const [tiles, setTiles] = useState([]);
+    const [activeTile, setActiveTile] = useState({x: null, y: null});
+
+
+
+
+    // Function to handle revealing tiles, updating their 'revealed' property (testing purposes)
     const revealTile = (x, y) => {
         setTiles((prevTiles) => {
             const newTiles = [...prevTiles];
@@ -46,19 +65,33 @@ function Dungeon({playerState}) {
         });
     };
 
-    const revealTilesToPlayer = (x, y) => { 
-        setTiles((prevTiles) => {
-            const newTiles = [...prevTiles];
-            for (let i = -playerState.vision; i <= playerState.vision; i++) {
-                for (let j = -playerState.vision; j <= playerState.vision; j++) {
-                    if (newTiles[y + i] && newTiles[y + i][x + j] && Math.abs(i) + Math.abs(j) <= playerState.vision + 1) {
-                        newTiles[y + i][x + j] = { ...newTiles[y + i][x + j], revealed: true };
+    useEffect(() => {
+        console.log('useEffect');
+        const revealTilesToPlayer = (x, y) => { 
+            setTiles((prevTiles) => {
+                const newTiles = [...prevTiles];
+                for (let i = -player.vision; i <= player.vision; i++) {
+                    for (let j = -player.vision; j <= player.vision; j++) {
+                        if (newTiles[y + i] && newTiles[y + i][x + j] && Math.abs(i) + Math.abs(j) <= player.vision + 1) {
+                            newTiles[y + i][x + j] = { ...newTiles[y + i][x + j], revealed: true };
+                        }
                     }
                 }
-            }
-            return newTiles;
-        });
-    }
+                return newTiles;
+            });
+        };
+
+        // Generate the initial dungeon layout when the component mounts
+        if (tiles.length === 0){
+            setTiles(generateDungeon(initialDungeonSize, player.position));
+            revealTilesToPlayer(player.position.x, player.position.y);
+        } else {
+            console.log('call updateDungeon');
+            setTiles(updateDungeon(tiles, player));
+            revealTilesToPlayer(player.position.x, player.position.y);
+        }
+
+    }, [player]);
 
     // Render the dungeon (simplified for this example)
     return (
@@ -71,16 +104,25 @@ function Dungeon({playerState}) {
                             style={{
                                 width: "20px",
                                 height: "20px",
-                                border: "1px solid black",
-                                backgroundColor: tile.revealed
-                                    ? tile.type === "wall"
-                                        ? "grey"
-                                        : "white"
-                                    : "black",
-                            }}
-                            onClick={() => revealTile(x, y)} // Example interaction to reveal tiles
+                                backgroundColor: 
+                                !tile.content.player ? 
+                                    !tile.active ? 
+                                        tile.revealed
+                                            ? tile.type === "wall"
+                                                    ? "grey"
+                                                    : "white"
+                                                : "black"
+                                            : "red"
+                                        : "blue",
+                                border: !tile.active ? "1px solid black" : "1px solid red",
+
+                            }}          
+
                         >
-                            {playerState.position.x === x && playerState.position.y === y ? "P" : null}
+                            <p
+                                style={{
+                                }}
+                            >{tile.content.player? "P" : null}</p>
                         </div>
                     ))}
                 </div>
