@@ -3,7 +3,7 @@ import "./Dungeon.css";
 
 const initialDungeonSize = { width: 20, height: 20 };
 
-const generateDungeon = (size, playerPosition) => {
+const generateDungeon = (size, playerPosition, player) => {
     const tiles = [];
 
     for (let y = 0; y < size.height; y++) {
@@ -25,10 +25,32 @@ const generateDungeon = (size, playerPosition) => {
     return tiles;
 };
 
-function Dungeon({playerState, movePlayer}) {
+function updateDungeon(tiles, player) {
+    console.log('Updating dungeon');
+    const newTiles = [...tiles];
+    for (let i = 0; i < newTiles.length; i++) {
+        for (let j = 0; j < newTiles[i].length; j++) {
+            newTiles[i][j] = { ...newTiles[i][j], revealed: false, content: { ...newTiles[i][j].content, player: false } };
+        }
+    }
+    for (let i = -3; i <= 3; i++) {
+        for (let j = -3; j <= 3; j++) {
+            if (newTiles[player.position.y + i] && newTiles[player.position.y + i][player.position.x + j] && Math.abs(i) + Math.abs(j) <= 1) {
+                if (player.position.y + i === player.position.y && player.position.x + j === player.position.x) {
+                    newTiles[player.position.y + i][player.position.x + j] = { ...newTiles[player.position.y + i][player.position.x + j], content: { ...newTiles[player.position.y + i][player.position.x + j].content, player: true } };
+                } else {
+                    newTiles[player.position.y + i][player.position.x + j] = { ...newTiles[player.position.y + i][player.position.x + j], revealed: true };
+                }
+            } 
+        }
+    }
+    return newTiles;
+}
+
+function Dungeon({player, movePlayer}) {
     const [tiles, setTiles] = useState([]);
     const [activeTile, setActiveTile] = useState({x: null, y: null});
-    const [player, setPlayer] = useState(playerState);
+
 
 
 
@@ -43,62 +65,14 @@ function Dungeon({playerState, movePlayer}) {
         });
     };
 
-
-
-    const selectPlayer = (x, y) => {
-        console.log("Player selected at: ", x, y);
-        console.log("Player position: ", playerState.position);
-        console.log("Active tile: ", activeTile);
-        // activate tile player is one and deactivate the rest, if present
-        if (activeTile.x === null && activeTile.y === null && playerState.position.x === x && playerState.position.y === y) {
-            setTiles((prevTiles) => {
-                const newTiles = [...prevTiles];
-                for (let i = 0; i < newTiles.length; i++) {
-                    for (let j = 0; j < newTiles[i].length; j++) {
-                        newTiles[i][j] = { ...newTiles[i][j], active: false };
-                    }
-                }
-                newTiles[y][x] = { ...newTiles[y][x], active: true };
-                return newTiles;
-            });
-            setActiveTile({x: x, y: y});
-        } else if (activeTile.x === x || activeTile.y === y) {
-            setTiles((prevTiles) => {
-                const newTiles = [...prevTiles];
-                for (let i = 0; i < newTiles.length; i++) {
-                    for (let j = 0; j < newTiles[i].length; j++) {
-                        newTiles[i][j] = { ...newTiles[i][j], active: false };
-                    }
-                }
-                newTiles[y][x] = { ...newTiles[y][x], active: false };
-                return newTiles;
-            });
-            setActiveTile({x: null, y: null});
-        } else if ((activeTile.x !== x || activeTile.y !== y) && playerState.position.x !== x && playerState.position.y !== y) {
-            // move player
-            movePlayer(x - playerState.position.x, y - playerState.position.y);
-            // setTiles((prevTiles) => {
-            //     const newTiles = [...prevTiles];
-            //     for (let i = 0; i < newTiles.length; i++) {
-            //         for (let j = 0; j < newTiles[i].length; j++) {
-            //             newTiles[i][j] = { ...newTiles[i][j], active: false };
-            //         }
-            //     }
-            //     newTiles[y][x] = { ...newTiles[y][x], active: true };
-            //     return newTiles;
-            // });
-            setActiveTile({x: x, y: y});
-            console.log('Attempt to move player');
-        }
-    }
-
     useEffect(() => {
+        console.log('useEffect');
         const revealTilesToPlayer = (x, y) => { 
             setTiles((prevTiles) => {
                 const newTiles = [...prevTiles];
-                for (let i = -playerState.vision; i <= playerState.vision; i++) {
-                    for (let j = -playerState.vision; j <= playerState.vision; j++) {
-                        if (newTiles[y + i] && newTiles[y + i][x + j] && Math.abs(i) + Math.abs(j) <= playerState.vision + 1) {
+                for (let i = -player.vision; i <= player.vision; i++) {
+                    for (let j = -player.vision; j <= player.vision; j++) {
+                        if (newTiles[y + i] && newTiles[y + i][x + j] && Math.abs(i) + Math.abs(j) <= player.vision + 1) {
                             newTiles[y + i][x + j] = { ...newTiles[y + i][x + j], revealed: true };
                         }
                     }
@@ -108,13 +82,20 @@ function Dungeon({playerState, movePlayer}) {
         };
 
         // Generate the initial dungeon layout when the component mounts
-        if (tiles.length === 0) {
-            setTiles(generateDungeon(initialDungeonSize, playerState.position));
-            revealTilesToPlayer(playerState.position.x, playerState.position.y);
+        if (tiles.length === 0){
+            setTiles(generateDungeon(initialDungeonSize, player.position));
+            revealTilesToPlayer(player.position.x, player.position.y);
+        } else {
+            console.log('call updateDungeon');
+            setTiles(updateDungeon(tiles, player));
+            revealTilesToPlayer(player.position.x, player.position.y);
         }
 
-    }, [playerState.position, activeTile.y, activeTile.x, tiles.length, playerState.vision, playerState.position.x, playerState.position.y, playerState]);
+    }, [player]);
 
+    console.log("Player state: ", player.position);
+    console.log("Active tile: ", activeTile);
+    console.log("Tiles: ", tiles);
     // Render the dungeon (simplified for this example)
     return (
         <div className="dungeon-container">
@@ -126,23 +107,23 @@ function Dungeon({playerState, movePlayer}) {
                             style={{
                                 width: "20px",
                                 height: "20px",
-                                backgroundColor: !tile.active ? tile.revealed
-                                    ? tile.type === "wall"
-                                        ? "grey"
-                                        : "white"
-                                    : "black"
-                                    : "red",
+                                backgroundColor: 
+                                !tile.content.player ? 
+                                    !tile.active ? 
+                                        tile.revealed
+                                            ? tile.type === "wall"
+                                                    ? "grey"
+                                                    : "white"
+                                                : "black"
+                                            : "red"
+                                        : "blue",
                                 border: !tile.active ? "1px solid black" : "1px solid red",
 
-                            }}
-                            // onClick={() => revealTile(x, y)} // Example interaction to reveal tiles
-                            onClick={() => selectPlayer(x, y)} // Example interaction to reveal tiles                           
+                            }}          
 
                         >
                             <p
                                 style={{
-                                    visibility: tile.revealed ? "visible" : "hidden",
-                                    margin: 0,
                                 }}
                             >{tile.content.player? "P" : null}</p>
                         </div>

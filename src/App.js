@@ -76,7 +76,7 @@ import Dungeon from './Components/Dungeon/GenerateDungeon';
     <div className="App">
       <h1>React App</h1>
       {/* Pass playerState as prop to GenerateDungeon */}
-      <Dungeon playerState={playerState} movePlayer={movePlayer}/>
+      <Dungeon player={playerState} movePlayer={movePlayer}/>
       {/* Displaying player states */}
       <div>
         {/* Displaying player states */}
