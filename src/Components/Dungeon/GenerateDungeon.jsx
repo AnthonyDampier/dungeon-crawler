@@ -50,9 +50,7 @@ function updateDungeon(tiles, player) {
 function Dungeon({player, movePlayer}) {
     const [tiles, setTiles] = useState([]);
     const [activeTile, setActiveTile] = useState({x: null, y: null});
-
-
-
+    const [playerMoving, setPlayerMoving] = useState(false);
 
     // Function to handle revealing tiles, updating their 'revealed' property (testing purposes)
     const revealTile = (x, y) => {
@@ -64,6 +62,39 @@ function Dungeon({player, movePlayer}) {
             return newTiles;
         });
     };
+
+    const showAvailableMoves = (x, y, player) => {
+        const newTiles = [...tiles];
+        if(!playerMoving){
+            // set any active tiles to inactive
+            for (let i = 0; i < newTiles.length; i++) {
+                for (let j = 0; j < newTiles[i].length; j++) {
+                    newTiles[i][j] = { ...newTiles[i][j], active: false };
+                }
+            }
+            // set the player's position to active
+            for (let i = -player.baseMovementSpeed; i <= player.baseMovementSpeed; i++) {
+                for (let j = -player.baseMovementSpeed; j <= player.baseMovementSpeed; j++) {
+                    if (newTiles[y + i] && newTiles[y + i][x + j] && Math.abs(i) + Math.abs(j) <= player.baseMovementSpeed && newTiles[y + i][x + j].type !== "wall") {
+                        newTiles[y + i][x + j] = { ...newTiles[y + i][x + j], active: true };
+                    }
+                }
+            }
+            setPlayerMoving(true);
+            setTiles(newTiles);
+        } else if (playerMoving && tiles[y][x].active){
+            
+            for (let i = 0; i < newTiles.length; i++) {
+                for (let j = 0; j < newTiles[i].length; j++) {
+                    newTiles[i][j] = { ...newTiles[i][j], active: false };
+                }
+            }
+            movePlayer(x - player.position.x, y - player.position.y);
+            setPlayerMoving(false);
+            setTiles(newTiles);
+        }
+
+    }
 
     useEffect(() => {
         console.log('useEffect');
@@ -91,7 +122,7 @@ function Dungeon({player, movePlayer}) {
             revealTilesToPlayer(player.position.x, player.position.y);
         }
 
-    }, [player]);
+    }, [player, tiles]);
 
     // Render the dungeon (simplified for this example)
     return (
@@ -115,8 +146,12 @@ function Dungeon({player, movePlayer}) {
                                             : "red"
                                         : "blue",
                                 border: !tile.active ? "1px solid black" : "1px solid red",
-
-                            }}          
+                            }} 
+                            onClick={() => {
+                                setActiveTile({x, y});
+                                showAvailableMoves(x, y, player);
+                                // movePlayer(x - player.position.x, y - player.position.y, tiles);
+                            }}         
 
                         >
                             <p
