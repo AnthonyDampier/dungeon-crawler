@@ -9,6 +9,8 @@ import Dungeon from './Components/Dungeon/GenerateDungeon';
     health: 100,
     inventory: [],
     vision: 3,
+    playerLevel: 1,
+    baseMovementSpeed: 2,
     stats: {
       strength: 10,
       agility: 10,
@@ -79,7 +81,6 @@ import Dungeon from './Components/Dungeon/GenerateDungeon';
       <Dungeon player={playerState} movePlayer={movePlayer}/>
       {/* Displaying player states */}
       <div>
-        {/* Displaying player states */}
         <div>
           <p>Health: {playerState.health}</p>
           <button onClick={() => updateHealth(-10)}>Hurt</button>
